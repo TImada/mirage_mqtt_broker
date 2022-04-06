@@ -14,7 +14,7 @@ type tables = {
   mutable max_index: int;
 }
 
-module Main (S: Mirage_types_lwt.STACKV4) (Clock: Mirage_types.MCLOCK) = struct
+module Main (S: Tcpip.Stack.V4) (Mclock: Mirage_clock.MCLOCK) = struct
   type mqtt_session = {
     cid: bytes option;
     flow: S.TCPV4.flow;
@@ -923,7 +923,7 @@ module Main (S: Mirage_types_lwt.STACKV4) (Clock: Mirage_types.MCLOCK) = struct
 
   (* Classify a incoming packet *)
   let do_pkt_processing flow pkt_type flags data offset remaining_length clock =
-    let t_now = Clock.elapsed_ns clock in
+    let t_now = Mclock.elapsed_ns clock in
     let _pkt_type =
       match tblfind flow_tbl flow with
       | Some cid -> begin (* the flow has already been acknoledged *)
@@ -1187,7 +1187,7 @@ module Main (S: Mirage_types_lwt.STACKV4) (Clock: Mirage_types.MCLOCK) = struct
     Logs.app (fun f -> f "IP address: %s" (String.concat "," ips));
     Logs.app (fun f -> f "Port number: %d" mqtt_port);
 
-    S.listen_tcpv4 s ~port:mqtt_port (fun flow ->
+    S.TCPV4.listen (S.tcpv4 s) ~port:mqtt_port (fun flow ->
       mqtt_broker flow clock
     );
     S.listen s
